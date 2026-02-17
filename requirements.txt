@@ -1,3 +1,6 @@
 streamlit
-st-gsheets-connection
-google-generativeai
+pandas
+google-genai
+gspread
+oauth2client
+Pillow
