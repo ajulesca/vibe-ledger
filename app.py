@@ -9,15 +9,23 @@ import json
 # --- CONFIGURAÇÃO ---
 st.set_page_config(page_title="VibeLedger", page_icon="💰", layout="wide")
 
-# Tentar carregar a chave da API do segredo
+# Limpador de chave privada para evitar o ValueError
+def get_service_account_info():
+    info = st.secrets["connections"]["gsheets"].to_dict()
+    # Isso remove os \n literais e garante que a chave seja lida corretamente
+    info["private_key"] = info["private_key"].replace("\\n", "\n")
+    return info
+
+# Tentar carregar a chave da API do Gemini
 api_key = st.secrets.get("GEMINI_API_KEY") or st.secrets.get("GOOGLE_API_KEY")
 client = genai.Client(api_key=api_key)
 
-# Conexão com Google Sheets
-conn = st.connection("gsheets", type=GSheetsConnection)
-
-def get_data():
-    return conn.read(ttl="1m")
+# Conexão com Google Sheets usando a info limpa
+try:
+    conn = st.connection("gsheets", type=GSheetsConnection, **get_service_account_info())
+except Exception as e:
+    # Se ainda der erro, vamos tentar a conexão padrão
+    conn = st.connection("gsheets", type=GSheetsConnection)
 
 # --- SIDEBAR / QUEM É VOCÊ? ---
 st.sidebar.title("Configurações")
