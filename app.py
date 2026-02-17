@@ -6,32 +6,18 @@ import pandas as pd
 import plotly.express as px
 import json
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
+# --- CONFIGURAÇÃO ---
 st.set_page_config(page_title="VibeLedger", page_icon="💰", layout="wide")
 
-# --- FUNÇÃO PARA CONECTAR AO SHEETS (À PROVA DE ERROS) ---
-def conectar_planilha():
-    try:
-        # Pegamos os segredos como um dicionário
-        secrets_dict = st.secrets["connections"]["gsheets"].to_dict()
-        
-        # O segredo do sucesso: Limpar a chave privada manualmente
-        # Removemos qualquer \n literal ou espaços extras e garantimos as quebras de linha reais
-        private_key = secrets_dict["private_key"]
-        if "\\n" in private_key:
-            private_key = private_key.replace("\\n", "\n")
-        
-        # Se a chave não tiver as quebras de linha reais, o cryptography.io vai rejeitar
-        secrets_dict["private_key"] = private_key
-        
-        return st.connection("gsheets", type=GSheetsConnection, **secrets_dict)
-    except Exception as e:
-        st.error(f"Erro na conexão: {e}")
-        return None
+# Conexão Direta (O Streamlit cuida de tudo se o Secrets estiver certo)
+conn = st.connection("gsheets", type=GSheetsConnection)
 
-conn = conectar_planilha()
+# Função para ler dados com cache curto (evita travar o app)
+@st.cache_data(ttl=60)
+def carregar_dados():
+    return conn.read()
 
-# --- CONFIGURAÇÃO GEMINI ---
+# Setup Gemini
 api_key = st.secrets.get("GEMINI_API_KEY") or st.secrets.get("GOOGLE_API_KEY")
 client = genai.Client(api_key=api_key)
 
