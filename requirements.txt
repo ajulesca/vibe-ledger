@@ -4,3 +4,5 @@ google-genai
 gspread
 oauth2client
 Pillow
+st-gsheets-connection
+plotly
